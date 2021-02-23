@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"log"
 	"os"
 
@@ -23,7 +23,7 @@ func main() {
 				Name: "user",
 				Aliases: []string{"u"},
 				Usage: "The username for the Write.as/WriteFreely account",
-				Required: true,
+				// Required: true,
 				Destination: &username,
 			},
 
@@ -31,14 +31,14 @@ func main() {
 				Name: "blog",
 				Aliases: []string{"b"},
 				Usage: "The alias of the destination blog for importing your Hugo content.",
-				Required: true,
+				// Required: true,
 				Destination: &dstBlog,
 			},
 
 			&cli.StringFlag{
 				Name: "content-dir",
 				Usage: "The name of the path to your source Hugo content (e.g., to import /content/news, use --content-dir news)",
-				Required: true,
+				// Required: true,
 				Destination: &srcPath,
 			},
 
@@ -49,15 +49,19 @@ func main() {
 			},
 		},
 
-		Action: func(c *cli.Context) error {
-			fmt.Println("Hello", username)
-			fmt.Println("Importing content from content ->", srcPath)
-			fmt.Println("Importing content into blog alias ->", dstBlog)
-			if uploadImages {
-				fmt.Println("> Uploading local images to Snap.as")
-			}
-			return nil
-		},
+		// Action: func(c *cli.Context) error {
+		// 	fmt.Println("Hello", username)
+		// 	fmt.Println("Importing content from content ->", srcPath)
+		// 	fmt.Println("Importing content into blog alias ->", dstBlog)
+		// 	if uploadImages {
+		// 		fmt.Println("> Uploading local images to Snap.as")
+		// 	}
+		// 	return nil
+		// },
+	}
+
+	app.Commands = []*cli.Command{
+		&cmdParseSource,
 	}
 
 	err := app.Run(os.Args)
