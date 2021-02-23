@@ -1,15 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	// "github.com/gohugoio/hugo/parser"
+	"github.com/gohugoio/hugo/parser/metadecoders"
+	"github.com/gohugoio/hugo/parser/pageparser"
 	"github.com/urfave/cli/v2"
 )
+
+
 
 var cmdParseSource = cli.Command{
 	Name: "parse",
@@ -28,11 +33,12 @@ func parseContentDirectory(c *cli.Context) error {
 	}
 
 	filepath.Walk(wd, func(path string, i os.FileInfo, err error) error {
-		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".go") {
+		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".md") {
 			fileName := i.Name()
 			fmt.Println("> Parsing", fileName)
 			parsePost(fileName)
 			fmt.Println("> Finished parsing", fileName)
+			fmt.Println("")
 			numberOfFiles += 1
 		}
 		return nil
@@ -44,6 +50,8 @@ func parseContentDirectory(c *cli.Context) error {
 }
 
 func parsePost(f string) error {
+	// hashtags := []string{}
+
 	file, err := os.Open(f)
 
 	if err != nil {
@@ -56,11 +64,24 @@ func parsePost(f string) error {
 		}
 	}()
 
-	scanner := bufio.NewScanner(file)
+	pf, err := pageparser.ParseFrontMatterAndContent(file)
 
-	for scanner.Scan() {
-		// For now, just print the output to the console.
-		fmt.Println(scanner.Text())
+	if pf.FrontMatterFormat == metadecoders.JSON || pf.FrontMatterFormat == metadecoders.YAML || pf.FrontMatterFormat == metadecoders.TOML {
+		fmt.Println("> Parsing front matter...")
+		for k, v := range pf.FrontMatter {
+			switch vv := v.(type) {
+			case time.Time:
+				pf.FrontMatter[k] = vv.Format(time.RFC3339)
+			}
+			if k == "tags" {
+				// Enumerate the tags, translate them to hashtags, and append them to hastags array
+			}
+			if k == "categories" {
+				// Enumerate the categories, translate them to hashtags, and append them to hashtag array
+			}
+			fmt.Println(k, "->", v)
+		}
+		fmt.Println("> Front matter parsed")
 	}
 
 	return nil
