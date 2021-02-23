@@ -66,6 +66,8 @@ func parsePost(f string) error {
 
 	pf, err := pageparser.ParseFrontMatterAndContent(file)
 
+	hashtags := []string{}
+
 	if pf.FrontMatterFormat == metadecoders.JSON || pf.FrontMatterFormat == metadecoders.YAML || pf.FrontMatterFormat == metadecoders.TOML {
 		fmt.Println("> Parsing front matter...")
 		for k, v := range pf.FrontMatter {
@@ -75,6 +77,16 @@ func parsePost(f string) error {
 			}
 			if k == "tags" {
 				// Enumerate the tags, translate them to hashtags, and append them to hastags array
+				tags, ok := v.([]interface{})
+				if !ok {
+					continue
+				}
+				for _, ti := range tags {
+					if t, ok := ti.(string); ok {
+						hashtags = append(hashtags, t)
+					}
+				}
+				fmt.Printf("tags: %v\n", hashtags)
 			}
 			if k == "categories" {
 				// Enumerate the categories, translate them to hashtags, and append them to hashtag array
