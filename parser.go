@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/gohugoio/hugo/parser"
 	"github.com/gohugoio/hugo/parser/metadecoders"
 	"github.com/gohugoio/hugo/parser/pageparser"
 	"github.com/urfave/cli/v2"
@@ -99,8 +98,14 @@ func parsePost(f string) error {
 				fmt.Println(k, "->", v)
 			}
 		}
-		fmt.Println("hashtags ->", hashtags)
 		fmt.Println("> Front matter parsed")
+
+		fmt.Println("")
+
+		fmt.Println("> Parsing content...")
+		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
+		fmt.Println(content)
+		fmt.Println("> Content parsed")
 	}
 
 	return nil
