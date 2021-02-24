@@ -108,7 +108,7 @@ func parsePost(f string) error {
 
 func convertToHashtag(s string) string {
 	hashtagPrefix := "#"
-	words := SplitAny(s, " -_")
+	words := SplitAny(s, " -_.")
 
 	// Collapse the words array to a single, camelCased string, and prefix with an octothorpe
 	if len(words) > 1 {
