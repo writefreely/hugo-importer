@@ -50,8 +50,6 @@ func parseContentDirectory(c *cli.Context) error {
 }
 
 func parsePost(f string) error {
-	// hashtags := []string{}
-
 	file, err := os.Open(f)
 
 	if err != nil {
@@ -83,18 +81,51 @@ func parsePost(f string) error {
 				}
 				for _, ti := range tags {
 					if t, ok := ti.(string); ok {
-						hashtags = append(hashtags, t)
+						hashtags = append(hashtags, convertToHashtag(t))
 					}
 				}
-				fmt.Printf("tags: %v\n", hashtags)
-			}
-			if k == "categories" {
+			} else if k == "categories" {
 				// Enumerate the categories, translate them to hashtags, and append them to hashtag array
+				categories, ok := v.([]interface{})
+				if !ok {
+					continue
+				}
+				for _, ci := range categories {
+					if c, ok := ci.(string); ok {
+						hashtags = append(hashtags, convertToHashtag(c))
+					}
+				}
+			} else {
+				fmt.Println(k, "->", v)
 			}
-			fmt.Println(k, "->", v)
 		}
+		fmt.Println("hashtags ->", hashtags)
 		fmt.Println("> Front matter parsed")
 	}
 
 	return nil
+}
+
+func convertToHashtag(s string) string {
+	hashtagPrefix := "#"
+	words := SplitAny(s, " -_")
+
+	// Collapse the words array to a single, camelCased string, and prefix with an octothorpe
+	if len(words) > 1 {
+		for i := 1; i < len(words); i++ {
+			words[i] = strings.Title(strings.ToLower(words[i]))
+		}
+		return hashtagPrefix + strings.Join(words, "")
+	} else {
+		return hashtagPrefix + words[0]
+	}
+}
+
+
+// Credit: https://stackoverflow.com/a/54426140
+func SplitAny(s string, seps string) []string {
+	splitter := func(r rune) bool {
+		return strings.ContainsRune(seps, r)
+	}
+	return strings.FieldsFunc(s, splitter)
 }
