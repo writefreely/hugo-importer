@@ -37,7 +37,6 @@ func parseContentDirectory(c *cli.Context) error {
 			fmt.Println("> Parsing", fileName)
 			parsePost(fileName)
 			fmt.Println("> Finished parsing", fileName)
-			fmt.Println("")
 			numberOfFiles += 1
 		}
 		return nil
@@ -66,7 +65,6 @@ func parsePost(f string) error {
 	hashtags := []string{}
 
 	if pf.FrontMatterFormat == metadecoders.JSON || pf.FrontMatterFormat == metadecoders.YAML || pf.FrontMatterFormat == metadecoders.TOML {
-		fmt.Println("> Parsing front matter...")
 		for k, v := range pf.FrontMatter {
 			switch vv := v.(type) {
 			case time.Time:
@@ -94,18 +92,16 @@ func parsePost(f string) error {
 						hashtags = append(hashtags, convertToHashtag(c))
 					}
 				}
-			} else {
-				fmt.Println(k, "->", v)
 			}
 		}
-		fmt.Println("> Front matter parsed")
-
-		fmt.Println("")
-
-		fmt.Println("> Parsing content...")
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
-		fmt.Println(content)
-		fmt.Println("> Content parsed")
+
+		post := postToMigrate{
+			title: pf.FrontMatter["title"].(string),
+			created: pf.FrontMatter["date"].(string),
+			body: content,
+		}
+		fmt.Printf("%+v\n", post)
 	}
 
 	return nil
@@ -133,4 +129,10 @@ func SplitAny(s string, seps string) []string {
 		return strings.ContainsRune(seps, r)
 	}
 	return strings.FieldsFunc(s, splitter)
+}
+
+type postToMigrate struct {
+	title string
+	created string
+	body string
 }
