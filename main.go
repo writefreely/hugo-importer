@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -51,12 +52,36 @@ func main() {
 
 		Action: func(c *cli.Context) error {
 			fmt.Println("Hello", username)
+			fmt.Println("Please enter your Write.as password:")
+
+			var enteredPassword string
+			for {
+				password, err := term.ReadPassword(0)
+				if err != nil {
+					panic(err)
+				}
+				if len(password) != 0 {
+					fmt.Println("Press Return to log in and start the migration.")
+					enteredPassword = string(password)
+				} else {
+					break
+				}
+			}
+
+			w, err := SignIn(username, enteredPassword)
+			if err != nil {
+				return err
+			}
+
 			fmt.Println("Importing content from content ->", srcPath)
 			fmt.Println("Importing content into blog alias ->", dstBlog)
 			if uploadImages {
-				fmt.Println("> Uploading local images to Snap.as")
+				fmt.Println("Uploading local images to Snap.as")
 			}
 			ParseContentDirectory(srcPath)
+
+			SignOut(w)
+
 			return nil
 		},
 	}

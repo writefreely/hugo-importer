@@ -106,6 +106,7 @@ func parsePost(f string) error {
 			body: content,
 		}
 		fmt.Printf("> Title: %+v\n", post.title)
+		fmt.Printf("> Published: %+v\n", post.created)
 	}
 
 	return nil
