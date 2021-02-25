@@ -10,22 +10,17 @@ import (
 
 	"github.com/gohugoio/hugo/parser/metadecoders"
 	"github.com/gohugoio/hugo/parser/pageparser"
-	"github.com/urfave/cli/v2"
 )
 
-
-
-var cmdParseSource = cli.Command{
-	Name: "parse",
-	Usage: "Parse the content source directory",
-	Action: parseContentDirectory,
-}
-
-func parseContentDirectory(c *cli.Context) error {
+func ParseContentDirectory(p string) error {
 	var numberOfFiles int = 0
 
+	// Get the current working directory.
+	rwd, err := os.Getwd()
+
+	// Change directory to the path passed in.
+	os.Chdir(rwd + "/" + p);
 	wd, err := os.Getwd()
-	fmt.Println("Working Directory ->", wd)
 
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +37,11 @@ func parseContentDirectory(c *cli.Context) error {
 		return nil
 	})
 
-	fmt.Printf("Parsed %d files", numberOfFiles)
+	fmt.Printf("Parsed %d files\n\n", numberOfFiles)
+
+	// Change the working directory back to /content
+	os.Chdir(rwd);
+	rwd, err = os.Getwd()
 
 	return nil
 }
@@ -64,14 +63,18 @@ func parsePost(f string) error {
 
 	hashtags := []string{}
 
-	if pf.FrontMatterFormat == metadecoders.JSON || pf.FrontMatterFormat == metadecoders.YAML || pf.FrontMatterFormat == metadecoders.TOML {
+	if 
+		pf.FrontMatterFormat == metadecoders.JSON ||
+		pf.FrontMatterFormat == metadecoders.YAML ||
+		pf.FrontMatterFormat == metadecoders.TOML {
 		for k, v := range pf.FrontMatter {
 			switch vv := v.(type) {
 			case time.Time:
 				pf.FrontMatter[k] = vv.Format(time.RFC3339)
 			}
 			if k == "tags" {
-				// Enumerate the tags, translate them to hashtags, and append them to hastags array
+				// Enumerate the tags, translate them to hashtags,
+				// and append them to hastags array
 				tags, ok := v.([]interface{})
 				if !ok {
 					continue
@@ -82,7 +85,8 @@ func parsePost(f string) error {
 					}
 				}
 			} else if k == "categories" {
-				// Enumerate the categories, translate them to hashtags, and append them to hashtag array
+				// Enumerate the categories, translate them to hashtags,
+				// and append them to hashtag array
 				categories, ok := v.([]interface{})
 				if !ok {
 					continue
@@ -101,7 +105,7 @@ func parsePost(f string) error {
 			created: pf.FrontMatter["date"].(string),
 			body: content,
 		}
-		fmt.Printf("%+v\n", post)
+		fmt.Printf("> Title: %+v\n", post.title)
 	}
 
 	return nil
@@ -111,7 +115,8 @@ func convertToHashtag(s string) string {
 	hashtagPrefix := "#"
 	words := SplitAny(s, " -_.")
 
-	// Collapse the words array to a single, camelCased string, and prefix with an octothorpe
+	// Collapse the words array to a single, camelCased string,
+	// and prefix with an octothorpe
 	if len(words) > 1 {
 		for i := 1; i < len(words); i++ {
 			words[i] = strings.Title(strings.ToLower(words[i]))
