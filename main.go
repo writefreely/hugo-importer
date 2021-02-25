@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/urfave/cli/v2"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -55,13 +55,14 @@ func main() {
 			fmt.Println("Please enter your Write.as password:")
 
 			var enteredPassword string
-			scanner := bufio.NewScanner(os.Stdin)
 			for {
-				scanner.Scan()
-				password := scanner.Text()
+				password, err := term.ReadPassword(0)
+				if err != nil {
+					panic(err)
+				}
 				if len(password) != 0 {
 					fmt.Println("Press Return to log in and start the migration.")
-					enteredPassword = password
+					enteredPassword = string(password)
 				} else {
 					break
 				}
