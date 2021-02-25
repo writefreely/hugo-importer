@@ -7,15 +7,15 @@ import (
 	"github.com/writeas/go-writeas/v2"
 )
 
-func SignIn(u string, p string) *writeas.Client {
+func SignIn(u string, p string) (*writeas.Client, error) {
 	fmt.Println("Logging in...")
 	c := writeas.NewClient()
 	_, err := c.LogIn(u, p)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	fmt.Println("Logged in!")
-	return c
+	return c, nil
 }
 
 func SignOut(c *writeas.Client) {

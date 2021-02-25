@@ -67,7 +67,10 @@ func main() {
 				}
 			}
 
-			w := SignIn(username, enteredPassword)
+			w, err := SignIn(username, enteredPassword)
+			if err != nil {
+				return err
+			}
 
 			fmt.Println("Importing content from content ->", srcPath)
 			fmt.Println("Importing content into blog alias ->", dstBlog)
