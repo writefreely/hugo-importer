@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -51,12 +52,32 @@ func main() {
 
 		Action: func(c *cli.Context) error {
 			fmt.Println("Hello", username)
+			fmt.Println("Please enter your Write.as password:")
+
+			var enteredPassword string
+			scanner := bufio.NewScanner(os.Stdin)
+			for {
+				scanner.Scan()
+				password := scanner.Text()
+				if len(password) != 0 {
+					fmt.Println("Press Return to log in and start the migration.")
+					enteredPassword = password
+				} else {
+					break
+				}
+			}
+
+			w := SignIn(username, enteredPassword)
+
 			fmt.Println("Importing content from content ->", srcPath)
 			fmt.Println("Importing content into blog alias ->", dstBlog)
 			if uploadImages {
-				fmt.Println("> Uploading local images to Snap.as")
+				fmt.Println("Uploading local images to Snap.as")
 			}
 			ParseContentDirectory(srcPath)
+
+			SignOut(w)
+
 			return nil
 		},
 	}
