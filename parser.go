@@ -19,7 +19,7 @@ func ParseContentDirectory(p string) error {
 	rwd, err := os.Getwd()
 
 	// Change directory to the path passed in.
-	os.Chdir(rwd + "/" + p);
+	os.Chdir(rwd + "/content/" + p);
 	wd, err := os.Getwd()
 
 	if err != nil {

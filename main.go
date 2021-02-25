@@ -17,7 +17,7 @@ func main() {
 
 	app := &cli.App{
 		Name: "Write.as Hugo Importer",
-		Usage: "Import a Hugo source directory into Write.as/WriteFreely by running this importer from the /content directory of your Hugo site.",
+		Usage: "Import a Hugo source directory into Write.as/WriteFreely by running this importer from the root directory of your Hugo site.",
 
 		Flags: []cli.Flag {
 			&cli.StringFlag{
