@@ -62,7 +62,7 @@ func main() {
 				}
 				if len(password) != 0 {
 					fmt.Println("Press Return to log in and start the migration.")
-					// enteredPassword = string(password)
+					enteredPassword = string(password)
 				} else {
 					break
 				}
@@ -80,6 +80,7 @@ func main() {
 			}
 			posts, err := ParseContentDirectory(srcPath)
 			if err != nil {
+				SignOut(w)
 				log.Fatal(err)
 			}
 			fmt.Println(posts)
