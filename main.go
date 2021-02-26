@@ -62,7 +62,7 @@ func main() {
 				}
 				if len(password) != 0 {
 					fmt.Println("Press Return to log in and start the migration.")
-					enteredPassword = string(password)
+					// enteredPassword = string(password)
 				} else {
 					break
 				}
@@ -78,7 +78,11 @@ func main() {
 			if uploadImages {
 				fmt.Println("Uploading local images to Snap.as")
 			}
-			ParseContentDirectory(srcPath)
+			posts, err := ParseContentDirectory(srcPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println(posts)
 
 			SignOut(w)
 
