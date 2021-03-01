@@ -36,7 +36,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 
 	// Change directory to the path passed in.
 	srcPath := filepath.Join(rwd, "content", p)
-	os.Chdir(srcPath);
+	os.Chdir(srcPath)
 	wd, err := os.Getwd()
 
 	if err != nil {
@@ -62,7 +62,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	fmt.Printf("Parsed %d files\n\n", numberOfFiles)
 
 	// Change the working directory back to /content
-	os.Chdir(rwd);
+	os.Chdir(rwd)
 	rwd, err = os.Getwd()
 
 	return posts, nil
@@ -87,8 +87,7 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 
 	var post PostToMigrate
 
-	if 
-		pf.FrontMatterFormat == metadecoders.JSON ||
+	if pf.FrontMatterFormat == metadecoders.JSON ||
 		pf.FrontMatterFormat == metadecoders.YAML ||
 		pf.FrontMatterFormat == metadecoders.TOML {
 		for k, v := range pf.FrontMatter {
@@ -132,11 +131,11 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 		}
 
 		post = PostToMigrate{
-			body: content,
-			title: pf.FrontMatter["title"].(string),
-			slug: slug,
-			lang: l,
-			rtl: i18n.LangIsRTL(l),
+			body:    content,
+			title:   pf.FrontMatter["title"].(string),
+			slug:    slug,
+			lang:    l,
+			rtl:     i18n.LangIsRTL(l),
 			created: pf.FrontMatter["date"].(string),
 		}
 	}
@@ -166,14 +165,14 @@ func scanConfigForLanguage(p string, f string) (string, error) {
 	var format metadecoders.Format
 
 	switch f {
-		case "json":
-			format = metadecoders.JSON
-		case "toml":
-			format = metadecoders.TOML
-		case "yaml":
-			format = metadecoders.YAML
-		default:
-			log.Fatal("Invalid config file format found")
+	case "json":
+		format = metadecoders.JSON
+	case "toml":
+		format = metadecoders.TOML
+	case "yaml":
+		format = metadecoders.YAML
+	default:
+		log.Fatal("Invalid config file format found")
 	}
 
 	content, err := ioutil.ReadFile(p)
@@ -197,10 +196,10 @@ func scanConfigForLanguage(p string, f string) (string, error) {
 }
 
 type PostToMigrate struct {
-	body string
-	title string
-	slug string
-	lang string
-	rtl bool
+	body    string
+	title   string
+	slug    string
+	lang    string
+	rtl     bool
 	created string
 }
