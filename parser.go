@@ -27,7 +27,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	}
 	fileComponents := strings.Split(matches[0], ".")
 	format := fileComponents[len(fileComponents)-1]
-	configFilePath := rwd + "/" + matches[0]
+	configFilePath := filepath.Join(rwd, matches[0])
 	languageCode, err := scanConfigForLanguage(configFilePath, format)
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +35,8 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	fmt.Println("Setting language:", languageCode)
 
 	// Change directory to the path passed in.
-	os.Chdir(rwd + "/content/" + p);
+	srcPath := filepath.Join(rwd, "content", p)
+	os.Chdir(srcPath);
 	wd, err := os.Getwd()
 
 	if err != nil {
