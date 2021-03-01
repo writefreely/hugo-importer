@@ -83,7 +83,12 @@ func main() {
 				SignOut(w)
 				log.Fatal(err)
 			}
-			fmt.Println(posts)
+			for _, post := range posts {
+				err := PublishPost(post, dstBlog, w)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 
 			SignOut(w)
 
