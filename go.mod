@@ -10,5 +10,6 @@ require (
 	github.com/writeas/go-writeas v1.1.0
 	github.com/writeas/go-writeas/v2 v2.0.3
 	github.com/writeas/impart v1.1.1 // indirect
+	github.com/writeas/web-core v1.2.0
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1
 )

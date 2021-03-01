@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,27 +11,48 @@ import (
 
 	"github.com/gohugoio/hugo/parser/metadecoders"
 	"github.com/gohugoio/hugo/parser/pageparser"
+	"github.com/writeas/web-core/i18n"
 )
 
-func ParseContentDirectory(p string) error {
+func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	var numberOfFiles int = 0
 
 	// Get the current working directory.
 	rwd, err := os.Getwd()
 
+	// Find the config file
+	matches, err := filepath.Glob("config.*")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fileComponents := strings.Split(matches[0], ".")
+	format := fileComponents[len(fileComponents)-1]
+	configFilePath := filepath.Join(rwd, matches[0])
+	languageCode, err := scanConfigForLanguage(configFilePath, format)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Setting language:", languageCode)
+
 	// Change directory to the path passed in.
-	os.Chdir(rwd + "/" + p);
+	srcPath := filepath.Join(rwd, "content", p)
+	os.Chdir(srcPath)
 	wd, err := os.Getwd()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	var posts []PostToMigrate
 	filepath.Walk(wd, func(path string, i os.FileInfo, err error) error {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".md") {
 			fileName := i.Name()
 			fmt.Println("> Parsing", fileName)
-			parsePost(fileName)
+			post, err := parsePost(fileName, languageCode)
+			if err != nil {
+				log.Fatal(err)
+			}
+			posts = append(posts, post)
 			fmt.Println("> Finished parsing", fileName)
 			numberOfFiles += 1
 		}
@@ -40,17 +62,17 @@ func ParseContentDirectory(p string) error {
 	fmt.Printf("Parsed %d files\n\n", numberOfFiles)
 
 	// Change the working directory back to /content
-	os.Chdir(rwd);
+	os.Chdir(rwd)
 	rwd, err = os.Getwd()
 
-	return nil
+	return posts, nil
 }
 
-func parsePost(f string) error {
+func parsePost(f string, l string) (PostToMigrate, error) {
 	file, err := os.Open(f)
 
 	if err != nil {
-		log.Fatal(err)
+		return PostToMigrate{}, err
 	}
 
 	defer func() {
@@ -63,8 +85,9 @@ func parsePost(f string) error {
 
 	hashtags := []string{}
 
-	if 
-		pf.FrontMatterFormat == metadecoders.JSON ||
+	var post PostToMigrate
+
+	if pf.FrontMatterFormat == metadecoders.JSON ||
 		pf.FrontMatterFormat == metadecoders.YAML ||
 		pf.FrontMatterFormat == metadecoders.TOML {
 		for k, v := range pf.FrontMatter {
@@ -100,16 +123,24 @@ func parsePost(f string) error {
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
 
-		post := postToMigrate{
-			title: pf.FrontMatter["title"].(string),
-			created: pf.FrontMatter["date"].(string),
-			body: content,
+		var slug string
+		if pf.FrontMatter["slug"] != nil {
+			slug = pf.FrontMatter["slug"].(string)
+		} else {
+			slug = ""
 		}
-		fmt.Printf("> Title: %+v\n", post.title)
-		fmt.Printf("> Published: %+v\n", post.created)
+
+		post = PostToMigrate{
+			body:    content,
+			title:   pf.FrontMatter["title"].(string),
+			slug:    slug,
+			lang:    l,
+			rtl:     i18n.LangIsRTL(l),
+			created: pf.FrontMatter["date"].(string),
+		}
 	}
 
-	return nil
+	return post, nil
 }
 
 func convertToHashtag(s string) string {
@@ -128,8 +159,47 @@ func convertToHashtag(s string) string {
 	}
 }
 
-type postToMigrate struct {
-	title string
+func scanConfigForLanguage(p string, f string) (string, error) {
+	var languageCode string
+
+	var format metadecoders.Format
+
+	switch f {
+	case "json":
+		format = metadecoders.JSON
+	case "toml":
+		format = metadecoders.TOML
+	case "yaml":
+		format = metadecoders.YAML
+	default:
+		log.Fatal("Invalid config file format found")
+	}
+
+	content, err := ioutil.ReadFile(p)
+	if err != nil {
+		return "", err
+	}
+
+	m, err := metadecoders.Default.UnmarshalToMap(content, format)
+	if err != nil {
+		return "", err
+	}
+
+	if m["languageCode"] != nil {
+		languageCode = m["languageCode"].(string)
+	}
+	if m["defaultContentLanguage"] != nil {
+		languageCode = m["defaultContentLanguage"].(string)
+	}
+
+	return languageCode[0:2], nil
+}
+
+type PostToMigrate struct {
+	body    string
+	title   string
+	slug    string
+	lang    string
+	rtl     bool
 	created string
-	body string
 }
