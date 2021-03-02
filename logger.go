@@ -10,7 +10,7 @@ import (
 	"github.com/writeas/go-writeas/v2"
 )
 
-var responses []response = []response{}
+var responses = []response{}
 
 func LogResponse(p *writeas.Post) {
 	r := response{
