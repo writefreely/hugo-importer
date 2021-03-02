@@ -86,14 +86,26 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 	hashtags := []string{}
 
 	var post PostToMigrate
+	var created time.Time
+	var updated time.Time
 
 	if pf.FrontMatterFormat == metadecoders.JSON ||
 		pf.FrontMatterFormat == metadecoders.YAML ||
 		pf.FrontMatterFormat == metadecoders.TOML {
 		for k, v := range pf.FrontMatter {
-			switch vv := v.(type) {
-			case time.Time:
-				pf.FrontMatter[k] = vv.Format(time.RFC3339)
+			if k == "date" {
+				c, err := time.Parse(time.RFC3339, v.(string))
+				if err != nil {
+					return PostToMigrate{}, err
+				}
+				created = c.UTC()
+			}
+			if k == "lastMod" {
+				u, err := time.Parse(time.RFC3339, v.(string))
+				if err != nil {
+					return PostToMigrate{}, err
+				}
+				updated = u.UTC()
 			}
 			if k == "tags" {
 				// Enumerate the tags, translate them to hashtags,
@@ -130,13 +142,16 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 			slug = ""
 		}
 
+		rtl := i18n.LangIsRTL(l)
+
 		post = PostToMigrate{
 			body:    content,
 			title:   pf.FrontMatter["title"].(string),
 			slug:    slug,
-			lang:    l,
-			rtl:     i18n.LangIsRTL(l),
-			created: pf.FrontMatter["date"].(string),
+			lang:    &l,
+			rtl:     &rtl,
+			created: &created,
+			updated: &updated,
 		}
 	}
 
@@ -199,7 +214,8 @@ type PostToMigrate struct {
 	body    string
 	title   string
 	slug    string
-	lang    string
-	rtl     bool
-	created string
+	lang    *string
+	rtl     *bool
+	created *time.Time
+	updated *time.Time
 }
