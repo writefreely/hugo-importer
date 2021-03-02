@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/writeas/go-writeas/v2"
 )
 
@@ -22,7 +20,7 @@ func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
 		return err
 	}
 
-	fmt.Println(wa)
+	LogResponse(wa)
 
 	return nil
 }

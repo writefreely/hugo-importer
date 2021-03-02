@@ -86,8 +86,14 @@ func main() {
 			for _, post := range posts {
 				err := PublishPost(post, dstBlog, w)
 				if err != nil {
+					SignOut(w)
 					log.Fatal(err)
 				}
+			}
+			err = WriteResponsesToDisk()
+			if err != nil {
+				SignOut(w)
+				log.Fatal(err)
 			}
 
 			SignOut(w)
