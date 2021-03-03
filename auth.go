@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
+	"net/url"
 
 	"github.com/writeas/go-writeas/v2"
 )
@@ -20,11 +20,17 @@ func SignIn(u string, p string, i string) (*writeas.Client, error) {
 		return c, nil
 	}
 
-	host := strings.TrimRight(i, "/") + "/api"
+	instance, err := url.Parse(i)
+	if err != nil {
+		return nil, err
+	}
+	instance.Scheme = "https"
+	instance.Path += "/api"
+
 	fmt.Println("Logging in to", i)
-	config := writeas.Config{URL: host}
+	config := writeas.Config{URL: instance.String()}
 	c := writeas.NewClientWith(config)
-	_, err := c.LogIn(u, p)
+	_, err = c.LogIn(u, p)
 	if err != nil {
 		return nil, err
 	}
