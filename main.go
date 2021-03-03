@@ -14,7 +14,7 @@ func main() {
 	var dstBlog string
 	var srcPath string
 	var uploadImages bool
-	var hostUrl string
+	var instanceUrl string
 
 	app := &cli.App{
 		Name:  "Write.as Hugo Importer",
@@ -45,9 +45,10 @@ func main() {
 			},
 
 			&cli.StringFlag{
-				Name:        "host",
-				Usage:       "Provide the URL of your WriteFreely instance (e.g., '--host https://pencil.writefree.ly')",
-				Destination: &hostUrl,
+				Name:        "instance",
+				Aliases:     []string{"i"},
+				Usage:       "Provide the URL of your WriteFreely instance (e.g., '--instance https://pencil.writefree.ly')",
+				Destination: &instanceUrl,
 			},
 
 			&cli.BoolFlag{
@@ -74,7 +75,7 @@ func main() {
 					break
 				}
 			}
-			w, err := SignIn(username, enteredPassword, hostUrl)
+			w, err := SignIn(username, enteredPassword, instanceUrl)
 			if err != nil {
 				return err
 			}

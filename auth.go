@@ -8,8 +8,8 @@ import (
 	"github.com/writeas/go-writeas/v2"
 )
 
-func SignIn(u string, p string, h string) (*writeas.Client, error) {
-	if h == "" {
+func SignIn(u string, p string, i string) (*writeas.Client, error) {
+	if i == "" {
 		fmt.Println("Logging in...")
 		c := writeas.NewClient()
 		_, err := c.LogIn(u, p)
@@ -20,8 +20,8 @@ func SignIn(u string, p string, h string) (*writeas.Client, error) {
 		return c, nil
 	}
 
-	host := strings.TrimRight(h, "/") + "/api"
-	fmt.Println("Logging in to", h)
+	host := strings.TrimRight(i, "/") + "/api"
+	fmt.Println("Logging in to", i)
 	config := writeas.Config{URL: host}
 	c := writeas.NewClientWith(config)
 	_, err := c.LogIn(u, p)
