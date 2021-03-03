@@ -14,6 +14,7 @@ func main() {
 	var dstBlog string
 	var srcPath string
 	var uploadImages bool
+	var hostUrl string
 
 	app := &cli.App{
 		Name:  "Write.as Hugo Importer",
@@ -43,6 +44,12 @@ func main() {
 				Destination: &srcPath,
 			},
 
+			&cli.StringFlag{
+				Name:        "host",
+				Usage:       "Provide the URL of your WriteFreely instance (e.g., '--host https://pencil.writefree.ly')",
+				Destination: &hostUrl,
+			},
+
 			&cli.BoolFlag{
 				Name:        "images",
 				Usage:       "Use this flag to import local images to Snap.as (only for Write.as accounts with Snap.as add-on).",
@@ -52,7 +59,7 @@ func main() {
 
 		Action: func(c *cli.Context) error {
 			fmt.Println("Hello", username)
-			fmt.Println("Please enter your Write.as password:")
+			fmt.Println("Please enter your password:")
 
 			var enteredPassword string
 			for {
@@ -67,8 +74,7 @@ func main() {
 					break
 				}
 			}
-
-			w, err := SignIn(username, enteredPassword)
+			w, err := SignIn(username, enteredPassword, hostUrl)
 			if err != nil {
 				return err
 			}
