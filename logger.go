@@ -36,7 +36,12 @@ func WriteResponsesToDisk() error {
 
 	responsesJson, _ := json.Marshal(responses)
 	fmt.Println("Writing publishing log to disk...")
-	err := ioutil.WriteFile("publishing-log.json", responsesJson, 0644)
+
+	t := time.Now()
+	ts := t.Format("20060102150405")
+	f := "publishing-log_" + ts + ".json"
+
+	err := ioutil.WriteFile(f, responsesJson, 0644)
 	if err != nil {
 		return err
 	}
