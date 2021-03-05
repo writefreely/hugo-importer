@@ -5,8 +5,8 @@ import (
 	"github.com/writeas/go-writeas/v2"
 )
 
-func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
-	wa, err := c.CreatePost(&writeas.PostParams{
+func PublishPost(p PostToMigrate, a string) error {
+	wa, err := Client.CreatePost(&writeas.PostParams{
 		Title:      p.title,
 		Content:    p.body,
 		Collection: a,
@@ -26,14 +26,14 @@ func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
 	return nil
 }
 
-func UploadImage(p string, c *writeas.Client) (string, error) {
-	t := c.token
+func UploadImage(p string) (string, error) {
+	t := Client.Token()
 	sc := snapas.NewClient(t)
-	p, err := sc.UploadPhoto(&snapas.PhotoParams{
+	i, err := sc.UploadPhoto(&snapas.PhotoParams{
 		FileName: p,
 	})
 	if err != nil {
 		return "", err
 	}
-	return p.URL, nil
+	return i.URL, nil
 }

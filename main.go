@@ -81,9 +81,9 @@ func main() {
 					break
 				}
 			}
-			w, err := SignIn(username, enteredPassword, instanceUrl)
+			err := SignIn(username, enteredPassword, instanceUrl)
 			if err != nil {
-				return err
+				log.Fatal(err)
 			}
 
 			fmt.Println("Importing content from content ->", srcPath)
@@ -93,23 +93,23 @@ func main() {
 			}
 			posts, err := ParseContentDirectory(srcPath, uploadImages)
 			if err != nil {
-				SignOut(w)
+				SignOut()
 				log.Fatal(err)
 			}
 			for _, post := range posts {
-				err := PublishPost(post, dstBlog, w)
+				err := PublishPost(post, dstBlog)
 				if err != nil {
-					SignOut(w)
+					SignOut()
 					log.Fatal(err)
 				}
 			}
 			err = WriteResponsesToDisk()
 			if err != nil {
-				SignOut(w)
+				SignOut()
 				log.Fatal(err)
 			}
 
-			SignOut(w)
+			SignOut()
 
 			return nil
 		},

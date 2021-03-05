@@ -8,39 +8,41 @@ import (
 	"github.com/writeas/go-writeas/v2"
 )
 
-func SignIn(u string, p string, i string) (*writeas.Client, error) {
+var Client *writeas.Client
+
+func SignIn(u string, p string, i string) error {
 	if i == "" {
 		fmt.Println("Logging in...")
-		c := writeas.NewClient()
-		_, err := c.LogIn(u, p)
+		Client = writeas.NewClient()
+		_, err := Client.LogIn(u, p)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		fmt.Println("Logged in!")
-		return c, nil
+		return nil
 	}
 
 	instance, err := url.Parse(i)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	instance.Scheme = "https"
 	instance.Path += "/api"
 
 	fmt.Println("Logging in to", i)
 	config := writeas.Config{URL: instance.String()}
-	c := writeas.NewClientWith(config)
-	_, err = c.LogIn(u, p)
+	Client = writeas.NewClientWith(config)
+	_, err = Client.LogIn(u, p)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	fmt.Println("Logged in!")
-	return c, nil
+	return nil
 }
 
-func SignOut(c *writeas.Client) {
+func SignOut() {
 	fmt.Println("Logging out...")
-	err := c.LogOut()
+	err := Client.LogOut()
 	if err != nil {
 		log.Fatal(err)
 	}
