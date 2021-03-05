@@ -59,7 +59,13 @@ func main() {
 		},
 
 		Action: func(c *cli.Context) error {
+			if uploadImages && len(instanceUrl) > 0 {
+				fmt.Println("Uploading images to Snap.as is only available on Write.as!")
+				return nil
+			}
+
 			fmt.Println("Hello", username)
+
 			fmt.Println("Please enter your password:")
 
 			var enteredPassword string
