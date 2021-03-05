@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -33,6 +34,11 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 		log.Fatal(err)
 	}
 	fmt.Println("Setting language:", languageCode)
+	baseURL, err := scanConfigForBaseUrl(configFilePath, format)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Found baseURL:", baseURL)
 
 	// Change directory to the path passed in.
 	srcPath := filepath.Join(rwd, "content", p)
@@ -48,7 +54,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".md") {
 			fileName := i.Name()
 			fmt.Println("> Parsing", fileName)
-			post, err := parsePost(fileName, languageCode)
+			post, err := parsePost(fileName, languageCode, baseURL)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -68,7 +74,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	return posts, nil
 }
 
-func parsePost(f string, l string) (PostToMigrate, error) {
+func parsePost(f string, l string, b string) (PostToMigrate, error) {
 	file, err := os.Open(f)
 
 	if err != nil {
@@ -134,6 +140,7 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 			}
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
+		scanContentForLocalImages(content, b)
 
 		var slug string
 		if pf.FrontMatter["slug"] != nil {
@@ -156,6 +163,41 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 	}
 
 	return post, nil
+}
+
+func scanContentForLocalImages(c string, b string) {
+	// Search for Markdown image links with optional alt text
+	var reMarkdown = regexp.MustCompile(`!\[.*\((?P<url>.+)\)`)
+	mdMatches := reMarkdown.FindAllStringSubmatch(c, -1)
+	for _, mdMatch := range mdMatches {
+		img := mdMatch[1]
+		if imageIsLocal(img, b) {
+			fmt.Println("  > 🖼 (✅) Uploading image to Snap.as: ", img)
+		} else {
+			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
+		}
+	}
+
+	// Search for HTML image links with optional alt text
+	var reHtml = regexp.MustCompile(`<img.*src="(?P<url>\S+)".*/>`)
+	htmlMatches := reHtml.FindAllStringSubmatch(c, -1)
+	for _, htmlMatch := range htmlMatches {
+		img := htmlMatch[1]
+		if imageIsLocal(img, b) {
+			fmt.Println("  > 🖼 (✅) Uploading image to Snap.as: ", img)
+		} else {
+			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
+		}
+	}
+}
+
+func imageIsLocal(p string, b string) bool {
+	// If the path starts with http, check to see if it's local or remote
+	if strings.HasPrefix(p, "http") {
+		return strings.HasPrefix(p, b)
+	}
+	// If it doesn't start with http, it's local, so we return true.
+	return true
 }
 
 func convertToHashtag(s string) string {
@@ -208,6 +250,39 @@ func scanConfigForLanguage(p string, f string) (string, error) {
 	}
 
 	return languageCode[0:2], nil
+}
+
+func scanConfigForBaseUrl(p string, f string) (string, error) {
+	var baseURL string
+
+	var format metadecoders.Format
+
+	switch f {
+	case "json":
+		format = metadecoders.JSON
+	case "toml":
+		format = metadecoders.TOML
+	case "yaml":
+		format = metadecoders.YAML
+	default:
+		log.Fatal("Invalid config file format found")
+	}
+
+	content, err := ioutil.ReadFile(p)
+	if err != nil {
+		return "", err
+	}
+
+	m, err := metadecoders.Default.UnmarshalToMap(content, format)
+	if err != nil {
+		return "", err
+	}
+
+	if m["baseURL"] != nil {
+		baseURL = m["baseURL"].(string)
+	}
+
+	return baseURL, nil
 }
 
 type PostToMigrate struct {
