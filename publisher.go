@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/snapas/go-snapas"
 	"github.com/writeas/go-writeas/v2"
 )
 
@@ -23,4 +24,16 @@ func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
 	LogResponse(wa)
 
 	return nil
+}
+
+func UploadImage(p string, c *writeas.Client) (string, error) {
+	t := c.token
+	sc := snapas.NewClient(t)
+	p, err := sc.UploadPhoto(&snapas.PhotoParams{
+		FileName: p,
+	})
+	if err != nil {
+		return "", err
+	}
+	return p.URL, nil
 }
