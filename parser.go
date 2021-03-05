@@ -15,7 +15,7 @@ import (
 	"github.com/writeas/web-core/i18n"
 )
 
-func ParseContentDirectory(p string) ([]PostToMigrate, error) {
+func ParseContentDirectory(p string, s bool) ([]PostToMigrate, error) {
 	var numberOfFiles int = 0
 
 	// Get the current working directory.
@@ -54,7 +54,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".md") {
 			fileName := i.Name()
 			fmt.Println("> Parsing", fileName)
-			post, err := parsePost(fileName, languageCode, baseURL)
+			post, err := parsePost(fileName, languageCode, baseURL, s)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	return posts, nil
 }
 
-func parsePost(f string, l string, b string) (PostToMigrate, error) {
+func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 	file, err := os.Open(f)
 
 	if err != nil {
@@ -140,7 +140,9 @@ func parsePost(f string, l string, b string) (PostToMigrate, error) {
 			}
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
-		scanContentForLocalImages(content, b)
+		if s {
+			scanContentForLocalImages(content, b)
+		}
 
 		var slug string
 		if pf.FrontMatter["slug"] != nil {

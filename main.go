@@ -85,7 +85,7 @@ func main() {
 			if uploadImages {
 				fmt.Println("Uploading local images to Snap.as")
 			}
-			posts, err := ParseContentDirectory(srcPath)
+			posts, err := ParseContentDirectory(srcPath, uploadImages)
 			if err != nil {
 				SignOut(w)
 				log.Fatal(err)
