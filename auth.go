@@ -13,6 +13,7 @@ var Client *writeas.Client
 func SignIn(u string, p string, i string) error {
 	if i == "" {
 		fmt.Println("Logging in...")
+		// Client = writeas.NewDevClient()
 		Client = writeas.NewClient()
 		_, err := Client.LogIn(u, p)
 		if err != nil {

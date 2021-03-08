@@ -15,11 +15,14 @@ import (
 	"github.com/writeas/web-core/i18n"
 )
 
+var wd string = ""
+
 func ParseContentDirectory(p string, s bool) ([]PostToMigrate, error) {
 	var numberOfFiles int = 0
 
 	// Get the current working directory.
 	rwd, err := os.Getwd()
+	wd = rwd
 
 	// Find the config file
 	matches, err := filepath.Glob("config.*")
@@ -141,7 +144,7 @@ func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
 		if s {
-			scanContentForLocalImages(content, b)
+			content = scanContentForLocalImages(content, b)
 		}
 
 		var slug string
@@ -167,14 +170,19 @@ func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 	return post, nil
 }
 
-func scanContentForLocalImages(c string, b string) {
+func scanContentForLocalImages(c string, b string) string {
 	// Search for Markdown image links with optional alt text
 	var reMarkdown = regexp.MustCompile(`!\[.*\((?P<url>.+)\)`)
 	mdMatches := reMarkdown.FindAllStringSubmatch(c, -1)
 	for _, mdMatch := range mdMatches {
 		img := mdMatch[1]
 		if imageIsLocal(img, b) {
-			fmt.Println("  > 🖼 (✅) Uploading image to Snap.as: ", img)
+			// Strip the base URL if the post uses an absolute URL.
+			if strings.HasPrefix(img, b) {
+				img = strings.Replace(img, b, "", 1)
+			}
+			imgURL := uploadOrLogError(img)
+			c = strings.Replace(c, img, imgURL, -1)
 		} else {
 			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
 		}
@@ -186,11 +194,18 @@ func scanContentForLocalImages(c string, b string) {
 	for _, htmlMatch := range htmlMatches {
 		img := htmlMatch[1]
 		if imageIsLocal(img, b) {
-			fmt.Println("  > 🖼 (✅) Uploading image to Snap.as: ", img)
+			// Strip the base URL if the post uses an absolute URL.
+			if strings.HasPrefix(img, b) {
+				img = strings.Replace(img, b, "", 1)
+			}
+			imgURL := uploadOrLogError(img)
+			c = strings.Replace(c, img, imgURL, -1)
 		} else {
 			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
 		}
 	}
+
+	return c
 }
 
 func imageIsLocal(p string, b string) bool {
@@ -200,6 +215,29 @@ func imageIsLocal(p string, b string) bool {
 	}
 	// If it doesn't start with http, it's local, so we return true.
 	return true
+}
+
+func uploadOrLogError(i string) string {
+	ip := filepath.Join(wd, "static", i)
+	fmt.Println("  > 🖼 (⏳) Uploading image to Snap.as:", ip)
+
+	retries := 3
+	var upErr string
+
+	for retries > 0 {
+		imgURL, err := UploadImage(ip)
+		if err != nil {
+			upErr = err.Error()
+			retries--
+			fmt.Println("  > 🖼 (⚠️) Upload failed. Retrying...")
+		} else {
+			fmt.Println("  > 🖼 (✅) Upload complete, at:", imgURL)
+			return imgURL
+		}
+	}
+	fmt.Println("  > 🖼 (⚠️) Upload failed. Logging error and skipping.")
+	LogUploadError(i, upErr)
+	return i
 }
 
 func convertToHashtag(s string) string {

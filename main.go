@@ -96,6 +96,18 @@ func main() {
 				SignOut()
 				log.Fatal(err)
 			}
+
+			if uploadImages {
+				wd, err := os.Getwd()
+				if err != nil {
+					fmt.Println(err)
+				}
+				err = WriteUploadErrorsTo(wd)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+
 			for _, post := range posts {
 				err := PublishPost(post, dstBlog)
 				if err != nil {
@@ -103,13 +115,13 @@ func main() {
 					log.Fatal(err)
 				}
 			}
-			err = WriteResponsesToDisk()
-			if err != nil {
-				SignOut()
-				log.Fatal(err)
-			}
 
 			SignOut()
+
+			err = WriteResponsesToDisk()
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			return nil
 		},
