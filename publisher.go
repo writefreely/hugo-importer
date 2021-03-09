@@ -28,7 +28,7 @@ func PublishPost(p PostToMigrate, a string) error {
 
 func UploadImage(p string) (string, error) {
 	t := Client.Token()
-	// sc := snapas.NewDevClient(t)
+	// sc := snapas.NewDevClient(t)		// Use in development
 	sc := snapas.NewClient(t)
 	i, err := sc.UploadPhoto(&snapas.PhotoParams{
 		FileName: p,
