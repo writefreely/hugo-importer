@@ -142,6 +142,7 @@ func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 			}
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
+		content = scanContentForShortcodes(content)
 		if s {
 			content = scanContentForLocalImages(content, b)
 		}
@@ -167,6 +168,52 @@ func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 	}
 
 	return post, nil
+}
+
+func scanContentForShortcodes(c string) string {
+	var shortcode = regexp.MustCompile(`{{< (?P<shortcodeType>\S+)\s(?P<shortcodeID>.*) >}}`)
+	matches := shortcode.FindAllStringSubmatch(c, -1)
+	for _, match := range matches {
+		fmt.Println("> ==============================================================================")
+		shortcodeType := match[1]
+		shortcodeValue := match[2]
+		fmt.Println("  > Shortcode found:", match[0])
+		fmt.Println("  > Shortcode type: ", shortcodeType)
+		fmt.Println("  > Shortcode ID:   ", shortcodeValue)
+
+		var urlString string = ""
+		switch shortcodeType {
+		case "gist":
+			// Split username from gist ID and strip any filename that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			urlString = "https://gist.github.com/" + values[0] + "/" + values[1]
+		case "instagram":
+			// Strip any `hidecaption` option that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			urlString = "https://www.instagram.com/p/" + values[0]
+		case "tweet":
+			urlString = "https://twitter.com/twitter/status/" + shortcodeValue
+		case "vimeo":
+			urlString = "https://player.vimeo.com/video/" + shortcodeValue
+		case "youtube":
+			// Strip anything other than the video ID that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			fmt.Println("  > VALUES:", values[0])
+			if string(values[0][0:4]) == "id=\"" {
+				subvalues := strings.Split(values[0], "\"")
+				urlString = "https://www.youtube.com/watch?v=" + subvalues[1]
+			} else {
+				urlString = "https://www.youtube.com/watch?v=" + shortcodeValue
+			}
+		default:
+			urlString = match[0]
+			fmt.Println("  > Unsupported shortcode — please see README")
+		}
+		c = strings.Replace(c, match[0], urlString, -1)
+		fmt.Println("  > Migrated URL:   ", urlString)
+		fmt.Println("> ==============================================================================")
+	}
+	return c
 }
 
 func scanContentForLocalImages(c string, b string) string {
