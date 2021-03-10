@@ -218,7 +218,7 @@ func scanContentForShortcodes(c string) string {
 
 func scanContentForLocalImages(c string, b string) string {
 	// Search for Markdown image links with optional alt text
-	var reMarkdown = regexp.MustCompile(`!\[.*\((?P<url>.+)\)`)
+	var reMarkdown = regexp.MustCompile(`!\[.*\]\((?P<url>.+)\)`)
 	mdMatches := reMarkdown.FindAllStringSubmatch(c, -1)
 	for _, mdMatch := range mdMatches {
 		img := mdMatch[1]
@@ -235,7 +235,7 @@ func scanContentForLocalImages(c string, b string) string {
 	}
 
 	// Search for HTML image links with optional alt text
-	var reHtml = regexp.MustCompile(`<img.*src="(?P<url>\S+)".*/>`)
+	var reHtml = regexp.MustCompile(`<img.*src="(?P<url>\S+)".*>`)
 	htmlMatches := reHtml.FindAllStringSubmatch(c, -1)
 	for _, htmlMatch := range htmlMatches {
 		img := htmlMatch[1]
