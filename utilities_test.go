@@ -62,3 +62,97 @@ func TestImageIsLocalIfRelativePath(t *testing.T) {
 		t.Fatalf(`ImageIsLocal() = %t, want %t`, result, wanted)
 	}
 }
+
+func TestImageIsLocalIfAbsolutePathWithSameBaseURL(t *testing.T) {
+	// Given
+	testPath := "https://example.com/images/picture.jpg"
+	baseURL := "https://example.com"
+	wanted := true
+
+	// When
+	result := ImageIsLocal(testPath, baseURL)
+
+	// Then
+	if result != wanted {
+		t.Fatalf(`ImageIsLocal() = %t, want %t`, result, wanted)
+	}
+}
+
+func TestImageIsLocalIfAbsolutePathWithDifferentBaseURL(t *testing.T) {
+	// Given
+	testPath := "https://example.com/images/picture.jpg"
+	baseURL := "https://write.as"
+	wanted := false
+
+	// When
+	result := ImageIsLocal(testPath, baseURL)
+
+	// Then
+	if result != wanted {
+		t.Fatalf(`ImageIsLocal() = %t, want %t`, result, wanted)
+	}
+}
+
+func TestScanConfigForBaseUrlWithValidConfigFile(t *testing.T) {
+	// Given
+	configFilePath := "testdata/config-valid.toml"
+	configFileFormat := "toml"
+	wanted := "https://example.com/"
+
+	// When
+	result, err := ScanConfigForBaseUrl(configFilePath, configFileFormat)
+	if err != nil {
+		t.Fatalf(`ScanConfigForBaseUrl() threw error %s`, err)
+	}
+
+	// Then
+	if result != wanted {
+		t.Fatalf(`ScanConfigForBaseUrl() = %s, want %s`, result, wanted)
+	}
+}
+
+func TestScanConfigForBaseUrlWithInvalidConfigFile(t *testing.T) {
+	// Given
+	configFilePath := "testdata/config-noBaseUrl.toml"
+	configFileFormat := "toml"
+
+	// When
+	result, err := ScanConfigForBaseUrl(configFilePath, configFileFormat)
+
+	// Then
+	if err == nil {
+		t.Fatalf(`ScanConfigForBaseUrl() = %s, want error`, result)
+	}
+}
+
+func TestScanConfigForLanguageWithValidConfigFile(t *testing.T) {
+	// Given
+	configFilePath := "testdata/config-valid.toml"
+	configFileFormat := "toml"
+	wanted := "en"
+
+	// When
+	result, err := ScanConfigForLanguage(configFilePath, configFileFormat)
+	if err != nil {
+		t.Fatalf(`ScanConfigForBaseUrl() threw error %s`, err)
+	}
+
+	// Then
+	if result != wanted {
+		t.Fatalf(`ScanConfigForLanguage() = %s, want %s`, result, wanted)
+	}
+}
+
+func TestScanConfigForLanguageWithInvalidConfigFile(t *testing.T) {
+	// Given
+	configFilePath := "testdata/config-noLang.toml"
+	configFileFormat := "toml"
+
+	// When
+	result, err := ScanConfigForLanguage(configFilePath, configFileFormat)
+
+	// Then
+	if err == nil {
+		t.Fatalf(`ScanConfigForLanguage() = %s, want error`, result)
+	}
+}
