@@ -108,6 +108,8 @@ func main() {
 				}
 			}
 
+			fmt.Println("")
+			fmt.Println("Publishing posts to", dstBlog)
 			for _, post := range posts {
 				err := PublishPost(post, dstBlog)
 				if err != nil {
@@ -115,6 +117,7 @@ func main() {
 					log.Fatal(err)
 				}
 			}
+			fmt.Println("Posts published.")
 
 			SignOut()
 
