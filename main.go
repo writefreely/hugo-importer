@@ -59,7 +59,13 @@ func main() {
 		},
 
 		Action: func(c *cli.Context) error {
+			if uploadImages && len(instanceUrl) > 0 {
+				fmt.Println("Uploading images to Snap.as is only available on Write.as!")
+				return nil
+			}
+
 			fmt.Println("Hello", username)
+
 			fmt.Println("Please enter your password:")
 
 			var enteredPassword string
@@ -75,9 +81,9 @@ func main() {
 					break
 				}
 			}
-			w, err := SignIn(username, enteredPassword, instanceUrl)
+			err := SignIn(username, enteredPassword, instanceUrl)
 			if err != nil {
-				return err
+				log.Fatal(err)
 			}
 
 			fmt.Println("Importing content from content ->", srcPath)
@@ -85,25 +91,40 @@ func main() {
 			if uploadImages {
 				fmt.Println("Uploading local images to Snap.as")
 			}
-			posts, err := ParseContentDirectory(srcPath)
+			posts, err := ParseContentDirectory(srcPath, uploadImages)
 			if err != nil {
-				SignOut(w)
-				log.Fatal(err)
-			}
-			for _, post := range posts {
-				err := PublishPost(post, dstBlog, w)
-				if err != nil {
-					SignOut(w)
-					log.Fatal(err)
-				}
-			}
-			err = WriteResponsesToDisk()
-			if err != nil {
-				SignOut(w)
+				SignOut()
 				log.Fatal(err)
 			}
 
-			SignOut(w)
+			if uploadImages {
+				wd, err := os.Getwd()
+				if err != nil {
+					fmt.Println(err)
+				}
+				err = WriteUploadErrorsTo(wd)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+
+			fmt.Println("")
+			fmt.Println("Publishing posts to", dstBlog)
+			for _, post := range posts {
+				err := PublishPost(post, dstBlog)
+				if err != nil {
+					SignOut()
+					log.Fatal(err)
+				}
+			}
+			fmt.Println("Posts published.")
+
+			SignOut()
+
+			err = WriteResponsesToDisk()
+			if err != nil {
+				log.Fatal(err)
+			}
 
 			return nil
 		},

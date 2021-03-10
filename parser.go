@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -14,11 +14,14 @@ import (
 	"github.com/writeas/web-core/i18n"
 )
 
-func ParseContentDirectory(p string) ([]PostToMigrate, error) {
+var wd string = ""
+
+func ParseContentDirectory(p string, s bool) ([]PostToMigrate, error) {
 	var numberOfFiles int = 0
 
 	// Get the current working directory.
 	rwd, err := os.Getwd()
+	wd = rwd
 
 	// Find the config file
 	matches, err := filepath.Glob("config.*")
@@ -28,11 +31,16 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	fileComponents := strings.Split(matches[0], ".")
 	format := fileComponents[len(fileComponents)-1]
 	configFilePath := filepath.Join(rwd, matches[0])
-	languageCode, err := scanConfigForLanguage(configFilePath, format)
+	languageCode, err := ScanConfigForLanguage(configFilePath, format)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("Setting language:", languageCode)
+	baseURL, err := ScanConfigForBaseUrl(configFilePath, format)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Found baseURL:", baseURL)
 
 	// Change directory to the path passed in.
 	srcPath := filepath.Join(rwd, "content", p)
@@ -48,7 +56,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 		if !i.IsDir() && !strings.HasPrefix(i.Name(), ".") && strings.HasSuffix(i.Name(), ".md") {
 			fileName := i.Name()
 			fmt.Println("> Parsing", fileName)
-			post, err := parsePost(fileName, languageCode)
+			post, err := parsePost(fileName, languageCode, baseURL, s)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -68,7 +76,7 @@ func ParseContentDirectory(p string) ([]PostToMigrate, error) {
 	return posts, nil
 }
 
-func parsePost(f string, l string) (PostToMigrate, error) {
+func parsePost(f string, l string, b string, s bool) (PostToMigrate, error) {
 	file, err := os.Open(f)
 
 	if err != nil {
@@ -116,7 +124,7 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 				}
 				for _, ti := range tags {
 					if t, ok := ti.(string); ok {
-						hashtags = append(hashtags, convertToHashtag(t))
+						hashtags = append(hashtags, ConvertToHashtag(t))
 					}
 				}
 			} else if k == "categories" {
@@ -128,12 +136,16 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 				}
 				for _, ci := range categories {
 					if c, ok := ci.(string); ok {
-						hashtags = append(hashtags, convertToHashtag(c))
+						hashtags = append(hashtags, ConvertToHashtag(c))
 					}
 				}
 			}
 		}
 		content := string(pf.Content[:]) + "\n\n" + strings.Join(hashtags, " ")
+		content = scanContentForShortcodes(content)
+		if s {
+			content = scanContentForLocalImages(content, b)
+		}
 
 		var slug string
 		if pf.FrontMatter["slug"] != nil {
@@ -158,56 +170,111 @@ func parsePost(f string, l string) (PostToMigrate, error) {
 	return post, nil
 }
 
-func convertToHashtag(s string) string {
-	hashtagPrefix := "#"
-	words := SplitAny(s, " -_.")
+func scanContentForShortcodes(c string) string {
+	var shortcode = regexp.MustCompile(`{{< (?P<shortcodeType>\S+)\s(?P<shortcodeID>.*) >}}`)
+	matches := shortcode.FindAllStringSubmatch(c, -1)
+	for _, match := range matches {
+		fmt.Println("> ==============================================================================")
+		shortcodeType := match[1]
+		shortcodeValue := match[2]
+		fmt.Println("  > Shortcode found:", match[0])
+		fmt.Println("  > Shortcode type: ", shortcodeType)
+		fmt.Println("  > Shortcode ID:   ", shortcodeValue)
 
-	// Collapse the words array to a single, camelCased string,
-	// and prefix with an octothorpe
-	if len(words) > 1 {
-		for i := 1; i < len(words); i++ {
-			words[i] = strings.Title(strings.ToLower(words[i]))
+		var urlString string = ""
+		switch shortcodeType {
+		case "gist":
+			// Split username from gist ID and strip any filename that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			urlString = "https://gist.github.com/" + values[0] + "/" + values[1]
+		case "instagram":
+			// Strip any `hidecaption` option that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			urlString = "https://www.instagram.com/p/" + values[0]
+		case "tweet":
+			urlString = "https://twitter.com/twitter/status/" + shortcodeValue
+		case "vimeo":
+			urlString = "https://player.vimeo.com/video/" + shortcodeValue
+		case "youtube":
+			// Strip anything other than the video ID that may have been passed in
+			values := strings.Split(shortcodeValue, " ")
+			fmt.Println("  > VALUES:", values[0])
+			if string(values[0][0:4]) == "id=\"" {
+				subvalues := strings.Split(values[0], "\"")
+				urlString = "https://www.youtube.com/watch?v=" + subvalues[1]
+			} else {
+				urlString = "https://www.youtube.com/watch?v=" + shortcodeValue
+			}
+		default:
+			urlString = match[0]
+			fmt.Println("  > Unsupported shortcode — please see README")
 		}
-		return hashtagPrefix + strings.Join(words, "")
-	} else {
-		return hashtagPrefix + words[0]
+		c = strings.Replace(c, match[0], urlString, -1)
+		fmt.Println("  > Migrated URL:   ", urlString)
+		fmt.Println("> ==============================================================================")
 	}
+	return c
 }
 
-func scanConfigForLanguage(p string, f string) (string, error) {
-	var languageCode string
-
-	var format metadecoders.Format
-
-	switch f {
-	case "json":
-		format = metadecoders.JSON
-	case "toml":
-		format = metadecoders.TOML
-	case "yaml":
-		format = metadecoders.YAML
-	default:
-		log.Fatal("Invalid config file format found")
+func scanContentForLocalImages(c string, b string) string {
+	// Search for Markdown image links with optional alt text
+	var reMarkdown = regexp.MustCompile(`!\[.*\]\((?P<url>.+)\)`)
+	mdMatches := reMarkdown.FindAllStringSubmatch(c, -1)
+	for _, mdMatch := range mdMatches {
+		img := mdMatch[1]
+		if ImageIsLocal(img, b) {
+			// Strip the base URL if the post uses an absolute URL.
+			if strings.HasPrefix(img, b) {
+				img = strings.Replace(img, b, "", 1)
+			}
+			imgURL := uploadOrLogError(img)
+			c = strings.Replace(c, img, imgURL, -1)
+		} else {
+			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
+		}
 	}
 
-	content, err := ioutil.ReadFile(p)
-	if err != nil {
-		return "", err
+	// Search for HTML image links with optional alt text
+	var reHtml = regexp.MustCompile(`<img.*src="(?P<url>\S+)".*>`)
+	htmlMatches := reHtml.FindAllStringSubmatch(c, -1)
+	for _, htmlMatch := range htmlMatches {
+		img := htmlMatch[1]
+		if ImageIsLocal(img, b) {
+			// Strip the base URL if the post uses an absolute URL.
+			if strings.HasPrefix(img, b) {
+				img = strings.Replace(img, b, "", 1)
+			}
+			imgURL := uploadOrLogError(img)
+			c = strings.Replace(c, img, imgURL, -1)
+		} else {
+			fmt.Println("  > 🖼 (⛔️) Skipping upload of remote image: ", img)
+		}
 	}
 
-	m, err := metadecoders.Default.UnmarshalToMap(content, format)
-	if err != nil {
-		return "", err
-	}
+	return c
+}
 
-	if m["languageCode"] != nil {
-		languageCode = m["languageCode"].(string)
-	}
-	if m["defaultContentLanguage"] != nil {
-		languageCode = m["defaultContentLanguage"].(string)
-	}
+func uploadOrLogError(i string) string {
+	ip := filepath.Join(wd, "static", i)
+	fmt.Println("  > 🖼 (⏳) Uploading image to Snap.as:", ip)
 
-	return languageCode[0:2], nil
+	retries := 3
+	var upErr string
+
+	for retries > 0 {
+		imgURL, err := UploadImage(ip)
+		if err != nil {
+			upErr = err.Error()
+			retries--
+			fmt.Println("  > 🖼 (⚠️) Upload failed. Retrying...")
+		} else {
+			fmt.Println("  > 🖼 (✅) Upload complete, at:", imgURL)
+			return imgURL
+		}
+	}
+	fmt.Println("  > 🖼 (⚠️) Upload failed. Logging error and skipping.")
+	LogUploadError(i, upErr)
+	return i
 }
 
 type PostToMigrate struct {

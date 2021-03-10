@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/snapas/go-snapas"
 	"github.com/writeas/go-writeas/v2"
 )
 
-func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
-	wa, err := c.CreatePost(&writeas.PostParams{
+func PublishPost(p PostToMigrate, a string) error {
+	wa, err := Client.CreatePost(&writeas.PostParams{
 		Title:      p.title,
 		Content:    p.body,
 		Collection: a,
@@ -23,4 +24,17 @@ func PublishPost(p PostToMigrate, a string, c *writeas.Client) error {
 	LogResponse(wa)
 
 	return nil
+}
+
+func UploadImage(p string) (string, error) {
+	t := Client.Token()
+	// sc := snapas.NewDevClient(t)		// Use in development
+	sc := snapas.NewClient(t)
+	i, err := sc.UploadPhoto(&snapas.PhotoParams{
+		FileName: p,
+	})
+	if err != nil {
+		return "", err
+	}
+	return i.URL, nil
 }

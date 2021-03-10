@@ -1,16 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/writeas/go-writeas/v2"
 )
 
 var responses = []response{}
+var uploadErrors = []uploadError{}
 
 func LogResponse(p *writeas.Post) {
 	r := response{
@@ -27,6 +31,14 @@ func LogResponse(p *writeas.Post) {
 		Collection: p.Collection.Alias,
 	}
 	responses = append(responses, r)
+}
+
+func LogUploadError(i string, e string) {
+	ue := uploadError{
+		ImagePath:   i,
+		UploadError: e,
+	}
+	uploadErrors = append(uploadErrors, ue)
 }
 
 func WriteResponsesToDisk() error {
@@ -49,6 +61,27 @@ func WriteResponsesToDisk() error {
 	return nil
 }
 
+func WriteUploadErrorsTo(p string) error {
+	if len(uploadErrors) > 0 {
+		fmt.Println("Writing image-upload error log to disk...")
+		f := "upload-error.log"
+		logfilePathName := filepath.Join(p, f)
+		file, err := os.Create(logfilePathName)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		w := bufio.NewWriter(file)
+		for _, line := range uploadErrors {
+			fmt.Fprintln(w, line)
+		}
+		fmt.Println("Error log written.")
+		return w.Flush()
+	}
+	return nil
+}
+
 type response struct {
 	ID         string    `json:"id"`
 	Slug       string    `json:"slug"`
@@ -61,4 +94,9 @@ type response struct {
 	Content    string    `json:"body"`
 	Tags       []string  `json:"tags"`
 	Collection string    `json:"collection,omitempty"`
+}
+
+type uploadError struct {
+	ImagePath   string
+	UploadError string
 }
