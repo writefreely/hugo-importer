@@ -20,10 +20,6 @@ First, you'll want to clone this repo, install development dependencies, and bui
 
 Next, [join our forum](https://discuss.write.as) so you can discuss development with the team. Then take a look at [the open issues](https://github.com/writefreely/hugo-importer/issues) to see where the project is today and where it's headed.
 
-When you find something you want to work on, start a new topic on the forum or jump into an existing discussion, if there is one. The team will respond and continue the conversation there.
-
-Lastly, **before submitting any code**, please sign our [contributor's agreement](https://phabricator.write.as/L1) so we can accept your contributions. It is substantially similar to the _Apache Individual Contributor License Agreement_. If you'd like to know about the rationale behind this requirement, you can [read more about that here](https://phabricator.write.as/w/writefreely/cla/).
-
 ### Branching
 
 All stable work lives on the `main` branch. We merge into it only when creating a release. Releases are tagged using semantic versioning.
