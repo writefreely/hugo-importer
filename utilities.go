@@ -68,8 +68,10 @@ func ScanConfigForBaseUrl(p string, f string) (string, error) {
 		return "", err
 	}
 
-	if m["baseURL"] != nil {
+	if m["baseURL"] != nil && len(m["baseURL"].(string)) > 0 {
 		baseURL = m["baseURL"].(string)
+	} else {
+		return "", errors.New("No baseURL value found")
 	}
 
 	return baseURL, nil
@@ -104,9 +106,15 @@ func ScanConfigForLanguage(p string, f string) (string, error) {
 
 	if m["languageCode"] != nil {
 		languageCode = m["languageCode"].(string)
+	} else {
+		return "", errors.New("No language found")
 	}
 	if m["defaultContentLanguage"] != nil {
 		languageCode = m["defaultContentLanguage"].(string)
+	}
+
+	if len(languageCode) == 0 {
+		return "", errors.New("No language found")
 	}
 
 	return languageCode[0:2], nil

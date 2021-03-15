@@ -6,6 +6,7 @@ require (
 	code.as/core/socks v1.0.0 // indirect
 	github.com/gohugoio/hugo v0.81.0
 	github.com/snapas/go-snapas v0.1.0
+	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli v1.22.5
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/writeas/go-writeas v1.1.0
