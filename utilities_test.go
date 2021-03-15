@@ -67,7 +67,7 @@ func TestScanConfigForBaseUrl(t *testing.T) {
 		expected          string
 	}{
 		"valid config file":   {"testdata/config-valid.toml", "toml", "https://example.com/"},
-		"invalid config file": {"testdata/config-noBaseURL.toml", "toml", "No baseURL value found"},
+		"invalid config file": {"testdata/config-noBaseUrl.toml", "toml", "No baseURL value found"},
 	}
 
 	for name, test := range testCases {
