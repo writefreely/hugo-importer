@@ -1,4 +1,4 @@
-module hugo-importer
+module github.com/writefreely/hugo-importer
 
 go 1.15
 
