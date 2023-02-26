@@ -19,7 +19,7 @@ on how to deploy the project on a live system.
 
 ### Prerequisites
 
-You'll need to have Go v1.16 or higher installed and available on your
+You'll need to have Go v1.20 or higher installed and available on your
 system's `$PATH`. Please refer to the [Go installation instructions] for
 detailed steps.
 
